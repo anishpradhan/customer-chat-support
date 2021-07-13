@@ -11,23 +11,27 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+import django_heroku
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = os.path.join(BASE_DIR, 'static/')
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-59-(s1+yuc7gd74_8d)$o-7vgg5qowfgt7&y+8)n^5xyzs47@-'
+# SECRET_KEY = 'django-insecure-59-(s1+yuc7gd74_8d)$o-7vgg5qowfgt7&y+8)n^5xyzs47@-'
+SECRET_KEY = os.environ.get('SECRET_KEY', default='foo')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+DEBUG = os.environ.get('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
-
+# ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = ['localhost', 'volgaichat.herokuapp.com', 'volgaisupport.heroku.com']
 
 # Application definition
 
@@ -51,7 +55,6 @@ TENANT_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.admin',
     'account',
-
 
 )
 
@@ -101,27 +104,56 @@ ASGI_APPLICATION = 'chatsupport.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        # 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        # if you're testing multitenancy, turn this one and the above off
-        'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': 'chat_support',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+config = locals()
+django_heroku.settings(config, databases=False)
+#
+# DATABASES = {
+#     'default': {
+#         # 'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         # if you're testing multitenancy, turn this one and the above off
+#         'ENGINE': 'django_tenants.postgresql_backend',
+#         # 'NAME': 'chat_support',
+#         # 'USER': 'postgres',
+#         # 'PASSWORD': 'admin',
+#         # 'HOST': 'localhost',
+#
+#         'NAME': os.environ.get('DB_NAME'),
+#         'USER': os.environ.get('DB_USER'),
+#         'PASSWORD': os.environ.get('DB_PASS'),
+#         'HOST': os.environ.get('DB_HOST'),
+#         'PORT': os.environ.get('DB_PORT'),
+#     }
+# }
+conn_max_age = config.get('CONN_MA_AGE', 600)
+config['DATABASES'] = {
+    'default': dj_database_url.parse(
+        os.environ['DATABASE_URL'],
+        engine='django_tenants.postgresql_backend',
+        conn_max_age=conn_max_age,
+        ssl_require=True
+    )
 }
+# DATABASE_URL = os.environ.get('DATABASE_URL')
+# db_from_env = dj_database_url.config(default=DATABASE_URL, conn_max_age=500, engine='django_tenants.postgresql_backend')
+# DATABASES['default'].update(db_from_env)
 
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': os.environ.get('REDIS_URL'),
+#         'OPTIONS': {
+#             'CLIENT_CLASS': "django_redis.client.DefaultClient",
+#         }
+#     },
+# }
 CHANNEL_LAYERS = {
     'default': {
-        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        # 'CONFIG': {
-        # "hosts": [('redis', 6379)]
-        # },
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        # 'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'CONFIG': {
+            "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
+        },
+        "symmetric_encryption_keys": [SECRET_KEY],
     },
 }
 
@@ -147,7 +179,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -161,11 +192,11 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/static/'
 STATICFILES_DIRS = (STATIC_DIR,)
 
 # Default primary key field type

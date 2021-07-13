@@ -245,7 +245,7 @@
         $("#roomForm").submit(function (e) {
             e.preventDefault();
             var form = $(this);
-            url = "http://t1.com:8000/chat/api/create_room/";
+            url = "https://volgaisupport.com/api/create_room/";
             $.ajax({
                 type: "POST",
                 url: url,
@@ -279,7 +279,7 @@
         $('#support').text(support_group);
 
 
-        websocket_url = 'ws://t1.com:8000/ws/livechat/chatrooms/' + room_id + '/';
+        websocket_url = 'wss://volgaisupport.herokuapp.com/ws/livechat/chatrooms/' + room_id + '/';
 
         var chatSocket = new WebSocket(
             websocket_url
@@ -359,7 +359,7 @@
                 $('#downloadFile').click(function () {
                     $.ajax({
                         type: 'GET',
-                        url: 'http://t1.com:8000/chat/api/download_file/',
+                        url: 'https://volgaisupport.herokuapp.com/api/download_file/',
                         data: {
                             'file_id': data['message']['file_id']
                         },
@@ -473,7 +473,7 @@
                 formData.append('uploaded_by', '{{user.username}}');
                 $.ajax({
                     type: 'POST',
-                    url: 'http://t1.com:8000/chat/api/upload_file/',
+                    url: 'https://volgaisupport.herokuapp.com/chat/api/upload_file/',
                     headers: {
                         "X-CSRFToken": '{{csrf_token}}',
                     },
